@@ -9,6 +9,7 @@ import lol.pyr.znpcsplus.interaction.ActionRegistry;
 import lol.pyr.znpcsplus.npc.NpcEntryImpl;
 import lol.pyr.znpcsplus.npc.NpcImpl;
 import lol.pyr.znpcsplus.npc.NpcTypeRegistryImpl;
+import lol.pyr.znpcsplus.npc.modeled.ModeledNpcEntryImpl;
 import lol.pyr.znpcsplus.packets.PacketFactory;
 import lol.pyr.znpcsplus.storage.NpcStorage;
 import lol.pyr.znpcsplus.util.NpcLocation;
@@ -30,8 +31,9 @@ public class YamlStorage implements NpcStorage {
     private final EntityPropertyRegistryImpl propertyRegistry;
     private final LegacyComponentSerializer textSerializer;
     private final File folder;
+    private final File modeledFolder;
 
-    public YamlStorage(PacketFactory packetFactory, ConfigManager configManager, ActionRegistry actionRegistry, NpcTypeRegistryImpl typeRegistry, EntityPropertyRegistryImpl propertyRegistry, LegacyComponentSerializer textSerializer, File folder) {
+    public YamlStorage(PacketFactory packetFactory, ConfigManager configManager, ActionRegistry actionRegistry, NpcTypeRegistryImpl typeRegistry, EntityPropertyRegistryImpl propertyRegistry, LegacyComponentSerializer textSerializer, File folder, File modeledFolder) {
         this.packetFactory = packetFactory;
         this.configManager = configManager;
         this.actionRegistry = actionRegistry;
@@ -39,7 +41,9 @@ public class YamlStorage implements NpcStorage {
         this.propertyRegistry = propertyRegistry;
         this.textSerializer = textSerializer;
         this.folder = folder;
+        this.modeledFolder = modeledFolder;
         if (!this.folder.exists()) this.folder.mkdirs();
+        if (!modeledFolder.exists()) this.modeledFolder.mkdirs();
     }
 
     @Override
@@ -69,6 +73,43 @@ public class YamlStorage implements NpcStorage {
             for (String s : config.getStringList("actions")) npc.addAction(actionRegistry.deserialize(s));
 
             NpcEntryImpl entry = new NpcEntryImpl(config.getString("id"), npc);
+            entry.setProcessed(config.getBoolean("is-processed"));
+            entry.setAllowCommandModification(config.getBoolean("allow-commands"));
+            entry.setSave(true);
+
+            npcs.add(entry);
+        }
+        return npcs;
+    }
+
+    @Override
+    public Collection<ModeledNpcEntryImpl> loadModeledNpcs() {
+        File[] files = modeledFolder.listFiles();
+        if (files == null || files.length == 0) return Collections.emptyList();
+        List<ModeledNpcEntryImpl> npcs = new ArrayList<>(files.length);
+        for (File file : files) if (file.isFile() && file.getName().toLowerCase().endsWith(".yml")) {
+            YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
+            UUID uuid = config.contains("uuid") ? UUID.fromString(config.getString("uuid")) : UUID.randomUUID();
+            NpcImpl npc = new NpcImpl(uuid, configManager, packetFactory, textSerializer, config.getString("world"),
+                    typeRegistry.getByName(config.getString("type")), deserializeLocation(config.getConfigurationSection("location")));
+
+            if (config.isBoolean("enabled")) npc.setEnabled(config.getBoolean("enabled"));
+
+            ConfigurationSection properties = config.getConfigurationSection("properties");
+            if (properties != null) {
+                for (String key : properties.getKeys(false)) {
+                    EntityPropertyImpl<?> property = propertyRegistry.getByName(key);
+                    npc.UNSAFE_setProperty(property, property.deserialize(properties.getString(key)));
+                }
+            }
+            HologramImpl hologram = npc.getHologram();
+            hologram.setOffset(config.getDouble("hologram.offset", 0.0));
+            hologram.setRefreshDelay(config.getLong("hologram.refresh-delay", -1));
+            for (String line : config.getStringList("hologram.lines")) hologram.addLineComponent(MiniMessage.miniMessage().deserialize(line));
+            for (String s : config.getStringList("actions")) npc.addAction(actionRegistry.deserialize(s));
+
+//            NpcEntryImpl entry = new NpcEntryImpl(config.getString("id"), npc);
+            ModeledNpcEntryImpl entry = new ModeledNpcEntryImpl();
             entry.setProcessed(config.getBoolean("is-processed"));
             entry.setAllowCommandModification(config.getBoolean("allow-commands"));
             entry.setSave(true);
@@ -116,6 +157,11 @@ public class YamlStorage implements NpcStorage {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public void saveModeledNpcs(Collection<ModeledNpcEntryImpl> modeledNpcs) {
+        // TODO
     }
 
     public NpcLocation deserializeLocation(ConfigurationSection section) {

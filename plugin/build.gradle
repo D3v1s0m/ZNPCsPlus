@@ -25,6 +25,7 @@ dependencies {
     implementation "com.github.retrooper.packetevents:spigot:2.0.0-SNAPSHOT" // Packets
     implementation "space.arim.dazzleconf:dazzleconf-ext-snakeyaml:1.2.1" // Configs
     implementation "lol.pyr:director-adventure:2.1.1" // Commands
+    implementation "com.ticxo.modelengine:api:R3.1.7" // ModelEngine API, TODO: update to 3.1.8
 
     // Fancy text library
     implementation "net.kyori:adventure-platform-bukkit:4.3.0"

@@ -15,7 +15,7 @@ public enum NpcStorageType {
     YAML {
         @Override
         public NpcStorage create(ConfigManager configManager, ZNpcsPlus plugin, PacketFactory packetFactory, ActionRegistry actionRegistry, NpcTypeRegistryImpl typeRegistry, EntityPropertyRegistryImpl propertyRegistry, LegacyComponentSerializer textSerializer) {
-            return new YamlStorage(packetFactory, configManager, actionRegistry, typeRegistry, propertyRegistry, textSerializer, new File(plugin.getDataFolder(), "data"));
+            return new YamlStorage(packetFactory, configManager, actionRegistry, typeRegistry, propertyRegistry, textSerializer, new File(plugin.getDataFolder(), "data"), new File(plugin.getDataFolder(), "modeledData"));
         }
     };
 

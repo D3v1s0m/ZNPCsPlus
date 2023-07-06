@@ -33,6 +33,7 @@ import lol.pyr.znpcsplus.interaction.ActionRegistry;
 import lol.pyr.znpcsplus.interaction.InteractionPacketListener;
 import lol.pyr.znpcsplus.metadata.*;
 import lol.pyr.znpcsplus.npc.*;
+import lol.pyr.znpcsplus.npc.modeled.ModeledNpcRegistryImpl;
 import lol.pyr.znpcsplus.packets.*;
 import lol.pyr.znpcsplus.parsers.*;
 import lol.pyr.znpcsplus.scheduling.FoliaScheduler;
@@ -136,6 +137,7 @@ public class ZNpcsPlus extends JavaPlugin {
         NpcTypeRegistryImpl typeRegistry = new NpcTypeRegistryImpl();
         NpcRegistryImpl npcRegistry = new NpcRegistryImpl(configManager, this, packetFactory, actionRegistry,
                 scheduler, typeRegistry, propertyRegistry, textSerializer);
+        ModeledNpcRegistryImpl modeledNpcRegistry = new ModeledNpcRegistryImpl(configManager, npcRegistry.getStorage(), packetFactory, scheduler, textSerializer);
         shutdownTasks.add(npcRegistry::unload);
 
         UserManager userManager = new UserManager();

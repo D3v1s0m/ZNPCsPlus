@@ -150,4 +150,8 @@ public class NpcRegistryImpl implements NpcRegistry {
     public void unload() {
         npcList.forEach(npcEntry -> npcEntry.getNpc().delete());
     }
+
+    public NpcStorage getStorage() {
+        return storage;
+    }
 }
